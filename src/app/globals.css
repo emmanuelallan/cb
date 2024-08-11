@@ -1,33 +1,147 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
-}
-
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+    font-variant-ligatures: no-common-ligatures;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+
+.profile-header {
+    padding-bottom: 0;
+    padding-top: 18px;
+    aspect-ratio: 3 / 1;
+    max-height: 318px;
+    width: 100%;
+    max-width: 954px;
+    margin: 0 auto;
+    border-radius: 0 0 14px 14px;
+    height: 318px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
 }
+
+@media (max-width: 992px) {
+    .profile-header {
+        height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-header {
+        height: 252px;
+    }
+}
+
+@media (max-width: 767px) {
+    .profile-header {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+}
+
+@media (max-width: 667px) {
+    .profile-header {
+        height: 236px;
+    }
+}
+
+@media (max-width: 557px) {
+    .profile-header {
+        height: 200px;
+    }
+}
+
+@media (max-width: 479px) {
+    .profile-header {
+        height: 170px;
+    }
+}
+
+@media (max-width: 395px) {
+    .profile-header {
+        height: 130px;
+    }
+}
+
+.translate-z {
+    transform: translateZ(0);
+}
+
+.btn-default {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    border: none;
+    cursor: pointer;
+    padding: 4px 12px;
+    min-height: 38px;
+    width: min-content;
+}
+
+button, input, select, textarea {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.progress {
+    height: 12px;
+    background-color: #c4c4c438;
+    border-radius: 500px;
+    margin-bottom: 2px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    color: transparent;
+    -o-transition: width 1s ease;
+    -webkit-transition: width 1s ease;
+    background: #1fec85;
+    font-size: 16px;
+    transition: width 1s ease;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    float: left;
+    width: 0%;
+    height: 100%;
+    font-size: 12px;
+    line-height: 20px;
+    color: #fff;
+    -webkit-transition: width .6s ease;
+    -o-transition: width .6s ease;
+    transition: width .6s ease;
+    text-align: center;
+}
+
+.btn-primary {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 46px;
+    padding: 8px 16px;
+    transition: color .15s ease-in-out 0s, background-color .15s ease-in-out 0s;
+}
+
+.para-control {
+    text-align: left;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: unset;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+  }
