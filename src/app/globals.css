@@ -5,6 +5,10 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+    scroll-behavior: smooth;
+}
+
 body {
     font-variant-ligatures: no-common-ligatures;
 }

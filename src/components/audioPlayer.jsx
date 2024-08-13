@@ -2,12 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import WaveSurfer from "wavesurfer.js";
-import {
-  Play,
-  Pause,
-  ChevronFirst,
-  ChevronLast,
-} from "lucide-react";
+import { Play, Pause, ChevronFirst, ChevronLast } from "lucide-react";
 
 const songs = [
   {
@@ -19,6 +14,57 @@ const songs = [
     title: "Sauti ya Uhai (Voice of Life)",
     artist: "my dear shelter",
     src: "/audio/song2.wav",
+  },
+];
+
+const additionalSongs = [
+  {
+    number: "ⅠⅠⅠ",
+    title: "Moyo wa Tumaini (Heart of Hope)",
+    artist: "my dear shelter x onion drift",
+    duration: "2:12",
+  },
+  {
+    number: "Ⅳ",
+    title: "Upepo wa Mashariki (Eastern Breeze)",
+    artist: "my dear shelter x onion drift",
+    duration: "2:52",
+  },
+  {
+    number: "Ⅴ",
+    title: "Mbingu za Amani (Skies of Peace)",
+    artist: "my dear shelter x xhu li",
+    duration: "2:57",
+  },
+  {
+    number: "Ⅵ",
+    title: "Bahari ya Ndoto (Ocean of Dreams)",
+    artist: "my dear shelter",
+    duration: "2:14",
+  },
+  {
+    number: "Ⅶ",
+    title: "Mapigo ya Mwanga (Beats of Light)",
+    artist: "my dear shelter",
+    duration: "2:22",
+  },
+  {
+    number: "Ⅷ",
+    title: "Midundo ya Uponyaji (Rhythms of Healing)",
+    artist: "my dear shelter x",
+    duration: "2:22",
+  },
+  {
+    number: "Ⅸ",
+    title: "Midundo ya Uponyaji (Rhythms of Healing)",
+    artist: "my dear shelter x",
+    duration: "2:22",
+  },
+  {
+    number: "Ⅹ",
+    title: "Mwanzo Mpya (New Beginning)",
+    artist: "my dear shelter x",
+    duration: "2:32",
   },
 ];
 
@@ -153,8 +199,13 @@ const AudioPlayer = () => {
           </button>
         </div>
         <div className="mt-2 text-xs text-gray-400">
-          <span>{Math.floor(currentTime)}s</span> /{" "}
-          <span>{Math.floor(duration)}s</span>
+          <span>
+            {new Date(currentTime * 1000).toISOString().substring(14, 19)}
+          </span>{" "}
+          /{" "}
+          <span>
+            {new Date(duration * 1000).toISOString().substring(14, 19)}
+          </span>
         </div>
         <ul className="mt-4">
           {songs.map((song, index) => (
@@ -172,97 +223,27 @@ const AudioPlayer = () => {
                   <span className="text-xs font-normal">{song.artist}</span>
                 </span>
               </span>
-              <span>{duration}</span>
+              <span className="text-xs font-normal">
+                {new Date(duration * 1000).toISOString().substring(14, 19)}
+              </span>
             </li>
           ))}
 
-          <li className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center">
-            <span className="flex items-center gap-x-4 font-medium">
-              <span>ⅠⅠⅠ</span>
-              <span className="flex flex-col gap-y-0.5">
-                <span> Moyo wa Tumaini (Heart of Hope)</span>
-                <span className="text-xs font-normal">
-                  my dear shelter x onion drift
+          {additionalSongs.map((song, index) => (
+            <li
+              key={index}
+              className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center"
+            >
+              <span className="flex items-center gap-x-4 font-medium">
+                <span>{song.number}</span>
+                <span className="flex flex-col gap-y-0.5">
+                  <span>{song.title}</span>
+                  <span className="text-xs font-normal">{song.artist}</span>
                 </span>
               </span>
-            </span>
-            <span>2.12s</span>
-          </li>
-          <li className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center">
-            <span className="flex items-center gap-x-4 font-medium">
-              <span>Ⅳ</span>
-              <span className="flex flex-col gap-y-0.5">
-                <span>Upepo wa Mashariki (Eastern Breeze)</span>
-                <span className="text-xs font-normal">
-                  my dear shelter x onion drift
-                </span>
-              </span>
-            </span>
-            <span>2.52s</span>
-          </li>
-          <li className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center">
-            <span className="flex items-center gap-x-4 font-medium">
-              <span>Ⅴ</span>
-              <span className="flex flex-col gap-y-0.5">
-                <span>Mbingu za Amani (Skies of Peace)</span>
-                <span className="text-xs font-normal">
-                  my dear shelter x xhu li
-                </span>
-              </span>
-            </span>
-            <span>2.57s</span>
-          </li>
-          <li className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center">
-            <span className="flex items-center gap-x-4 font-medium">
-              <span>Ⅵ</span>
-              <span className="flex flex-col gap-y-0.5">
-                <span>Bahari ya Ndoto (Ocean of Dreams)</span>
-                <span className="text-xs font-normal">my dear shelter</span>
-              </span>
-            </span>
-            <span>2.14s</span>
-          </li>
-
-          <li className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center">
-            <span className="flex items-center gap-x-4 font-medium">
-              <span>Ⅶ</span>
-              <span className="flex flex-col gap-y-0.5">
-                <span>Mapigo ya Mwanga (Beats of Light)</span>
-                <span className="text-xs font-normal">my dear shelter</span>
-              </span>
-            </span>
-            <span>2.22s</span>
-          </li>
-          <li className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center">
-            <span className="flex items-center gap-x-4 font-medium">
-              <span>Ⅷ</span>
-              <span className="flex flex-col gap-y-0.5">
-                <span>Midundo ya Uponyaji (Rhythms of Healing)</span>
-                <span className="text-xs font-normal">my dear shelter x</span>
-              </span>
-            </span>
-            <span>2.22s</span>
-          </li>
-          <li className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center">
-            <span className="flex items-center gap-x-4 font-medium">
-              <span>Ⅸ</span>
-              <span className="flex flex-col gap-y-0.5">
-                <span>Midundo ya Uponyaji (Rhythms of Healing)</span>
-                <span className="text-xs font-normal">my dear shelter x</span>
-              </span>
-            </span>
-            <span>2.22s</span>
-          </li>
-          <li className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center">
-            <span className="flex items-center gap-x-4 font-medium">
-              <span>Ⅹ</span>
-              <span className="flex flex-col gap-y-0.5">
-                <span>Mwanzo Mpya (New Beginning)</span>
-                <span className="text-xs font-normal">my dear shelter x</span>
-              </span>
-            </span>
-            <span>2.32s</span>
-          </li>
+              <span>{song.duration}</span>
+            </li>
+          ))}
         </ul>
       </div>
     </div>
