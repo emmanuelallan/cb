@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, Fragment, useEffect } from "react";
 import Image from "next/image";
-import { usePaystackPayment } from "react-paystack";
 import {
   Dialog,
   Transition,
@@ -10,55 +9,61 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { X } from "lucide-react";
+import { Info, X } from "lucide-react";
 import { toast } from "sonner";
+import PaymentMethod from "./paymentMethod";
 
 const PRODUCTS = [
   {
     id: 1,
     title: "Double Gatefold, White Vinyl Pack",
-    price: 3499,
+    price: 3699,
     description:
       "Limited edition Double Gatefold, White Vinyl Pack of Obsession...",
     imageUrl: "/images/vinyl.webp",
-    pledgeText: "Pledge $34.99",
   },
   {
     id: 2,
     title: "Chillhop Essentials - Winter 2019 CD - Limited Edition",
-    price: 1675,
+    price: 1875,
     description:
       "Limited edition Double Gatefold, White Vinyl Pack of Obsession...",
     imageUrl: "/images/disk.webp",
-    pledgeText: "Pledge $16.75",
   },
   {
     id: 3,
     title: "Chillhop Essentials - Summer 2023 Cassette Tape - Limited Edition",
-    price: 1824,
+    price: 2224,
     description:
       "Limited edition Double Gatefold, White Vinyl Pack of Obsession...",
     imageUrl: "/images/tape.webp",
-    pledgeText: "Pledge $18.24",
   },
 ];
 
-const MIN_PLEDGE = 500;
-const MAX_PLEDGE = 9999900;
+const MIN_CHAI = 1;
+const MAX_CHAI = 3333;
+const CHAI_PRICE = 5;
 
 export default function Payment() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    pledge: MIN_PLEDGE,
+    chaiCount: MIN_CHAI,
+    amount: MIN_CHAI * CHAI_PRICE,
     name: "",
-    email: "",
     message: "",
     isPrivate: false,
   });
   const [formErrors, setFormErrors] = useState({});
+  const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  const isBrowser = () => typeof window !== "undefined";
+  useEffect(() => {
+    if (shouldScrollToTop) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setShouldScrollToTop(false);
+    }
+  }, [shouldScrollToTop]);
 
   const openProductModal = (product) => {
     setSelectedProduct(product);
@@ -70,75 +75,111 @@ export default function Payment() {
     setSelectedProduct(null);
   };
 
-  const handlePledgeChange = (amount) => {
-    setFormData((prev) => ({
-      ...prev,
-      pledge: Math.max(MIN_PLEDGE, Math.min(MAX_PLEDGE, prev.pledge + amount)),
-    }));
+  const handleChaiChange = (amount) => {
+    setFormData((prev) => {
+      const newChaiCount = Math.max(
+        MIN_CHAI,
+        Math.min(MAX_CHAI, prev.chaiCount + amount)
+      );
+      return {
+        ...prev,
+        chaiCount: newChaiCount,
+        amount: newChaiCount * CHAI_PRICE,
+      };
+    });
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    if (name === "amount") {
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue)) {
+        const chaiCount = Math.floor(numValue / CHAI_PRICE);
+        setFormData((prev) => ({
+          ...prev,
+          chaiCount: Math.max(MIN_CHAI, Math.min(MAX_CHAI, chaiCount)),
+          amount: numValue,
+        }));
+
+        // Validate and set error
+        const error = validateAmount(numValue);
+        setFormErrors((prev) => ({ ...prev, amount: error }));
+      } else {
+        setFormData((prev) => ({ ...prev, amount: value }));
+        setFormErrors((prev) => ({
+          ...prev,
+          amount: "Please enter a valid number",
+        }));
+      }
+    } else if (name === "chaiCount") {
+      const numValue = parseInt(value, 10);
+      if (!isNaN(numValue)) {
+        const newChaiCount = Math.max(MIN_CHAI, Math.min(MAX_CHAI, numValue));
+        const newAmount = newChaiCount * CHAI_PRICE;
+        setFormData((prev) => ({
+          ...prev,
+          chaiCount: newChaiCount,
+          amount: newAmount,
+        }));
+
+        // Validate and set error
+        const error = validateAmount(newAmount);
+        setFormErrors((prev) => ({ ...prev, amount: error }));
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   };
 
   const handleProductPledge = (product) => {
+    const chaiCount = Math.floor(product.price / (CHAI_PRICE * 100));
     setFormData((prev) => ({
       ...prev,
-      pledge: product.price,
+      chaiCount: chaiCount,
+        amount: chaiCount * CHAI_PRICE,
     }));
 
-    isBrowser() && window.scrollTo({ top: 0, behavior: "smooth" });
+    setShouldScrollToTop(true);
+
     toast.success(
-      `Pledge amount updated to $${(product.price / 100).toFixed(2)}`
+      `Pledge amount updated to ${chaiCount} chai ($${(
+        chaiCount * CHAI_PRICE
+      ).toFixed(2)})`
     );
   };
 
   const validateForm = () => {
     const errors = {};
-    if (formData.pledge < MIN_PLEDGE || formData.pledge > MAX_PLEDGE) {
-      errors.pledge = `Please enter an amount between $${
-        MIN_PLEDGE / 100
-      } and $${MAX_PLEDGE / 100}`;
-    }
-    if (!formData.email.includes("@")) {
-      errors.email = "Please enter a valid email address";
-    }
+    // Add any other form validations here
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  const validateAmount = (amount) => {
+    if (amount < CHAI_PRICE) {
+      return `Please enter an amount of at least $${CHAI_PRICE}`;
+    } else if (amount > MAX_CHAI * CHAI_PRICE) {
+      return `The maximum amount is $${MAX_CHAI * CHAI_PRICE}`;
+    }
+    return null;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      initializePayment(onSuccess, onClose);
+
+      setIsPaymentModalOpen(true);
     }
   };
 
   const config = {
     reference: new Date().getTime().toString(),
-    email: formData.email,
-    amount: formData.pledge,
-    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+    amount: formData.chaiCount * CHAI_PRICE,
+    currency: "USD",
   };
-
-  const onSuccess = (reference) => {
-    console.log("Payment successful. Reference:", reference);
-    toast.success("Payment successful! Thank you for your pledge.");
-    // Here you would typically send the payment details to your server
-  };
-
-  const onClose = () => {
-    console.log("Payment window closed");
-    toast.error(
-      "Payment cancelled. Please try again if you wish to complete your pledge."
-    );
-  };
-
-  const initializePayment = usePaystackPayment(config);
 
   const ProductModal = ({ product, isOpen, onClose }) => (
     <Transition appear show={isOpen} as={Fragment}>
@@ -166,7 +207,7 @@ export default function Payment() {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all relative">
+              <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-card p-6 text-left align-middle shadow-xl transition-all relative">
                 <DialogTitle
                   as="h3"
                   className="text-lg font-medium leading-6 text-gray-900 max-w-[92%]"
@@ -209,245 +250,216 @@ export default function Payment() {
   );
 
   return (
-    <div className="md:contents lg:max-w-[400px] lg:w-screen space-y-4 max-w-[400px] w-[400px] min-w-[285px] md:max-w-[550px] md:min-w-[285px]">
-      <div className="col-span-1 before:table">
-        <div className="h-auto max-w-screen w-full min-w-[285px] p-4 m-auto bg-card rounded-2xl shadow-none">
-          <div className="flex flex-col w-full">
-            <div className="mb-4 flex items-start justify-between">
-              <span className="font-bold text-base text-limit-one-line">
-                Make a pledge without a reward
-              </span>
-            </div>
+    <>
+      <div className="md:contents lg:max-w-[400px] lg:w-screen space-y-4 max-w-[400px] w-[400px] min-w-[285px] md:max-w-[550px] md:min-w-[285px]">
+        <div className="col-span-1 before:table">
+          <div className="h-auto max-w-screen w-full min-w-[285px] p-6 m-auto bg-card rounded-3xl shadow-none">
+            <div className="flex flex-col w-full">
+              <div className="mb-4 flex items-start justify-between">
+                <span className="font-bold text-base text-limit-one-line">
+                  Make a pledge in chai without a reward
+                </span>
+              </div>
 
-            <form className="w-full" onSubmit={handleSubmit}>
-              <div className="flex justify-start flex-row items-center my-2">
-                <div className="w-full flex justify-between items-center">
-                  <div className="w-auto justify-start mb-4 flex flex-row items-center">
-                    <Image
-                      src="/images/cup-border.webp"
-                      alt="Donation cup"
-                      className="mr-2 object-cover bg-center align-middle"
-                      width={43}
-                      height={28}
-                    />
-                    <div className="w-auto">
-                      <div className="max-w-20 break-words text-base">
-                        $5 each
+              <form className="w-full" onSubmit={handleSubmit}>
+                <div className="flex justify-start flex-row items-center my-2">
+                  <div className="w-full flex justify-between items-center">
+                    <div className="w-auto justify-start mb-4 flex flex-row items-center">
+                      <Image
+                        src="/images/cup-border.webp"
+                        alt="Donation cup"
+                        className="mr-2 object-cover bg-center align-middle"
+                        width={43}
+                        height={28}
+                      />
+                      <div className="w-auto">
+                        <div className="max-w-20 break-words text-base">
+                          1 chai = ${CHAI_PRICE}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex justify-between mb-2 gap-x-1">
-                    <button
-                      type="button"
-                      className="w-[46px] h-[46px] bg-primary/30 text-primary text-[20px] flex justify-center items-center rounded-full font-semibold cursor-pointer disabled:bg-gray-200 disabled:border-gray-300 disabled:border disabled:text-gray-400"
-                      onClick={() => handlePledgeChange(-500)}
-                      disabled={formData.pledge <= MIN_PLEDGE}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={MIN_PLEDGE / 100}
-                      max={MAX_PLEDGE / 100}
-                      name="pledge"
-                      value={formData.pledge / 100}
-                      onChange={(e) =>
-                        handleInputChange({
-                          target: {
-                            name: "pledge",
-                            value: Math.min(
-                              MAX_PLEDGE,
-                              Math.max(MIN_PLEDGE, e.target.value * 100)
-                            ),
-                          },
-                        })
-                      }
-                      className="bg-card text-dark my-0 mx-0.5 inline-block align-top text-[18px] leading-[30px] py-2 px-0.5 max-w-[55px] min-w-[70px] border-[0.5px] border-gray-300 rounded-[100px] text-center bg-none shadow-none transition-all outline-none focus:border-dark ap-none"
-                    />
-                    <button
-                      type="button"
-                      className="w-[46px] h-[46px] bg-primary/30 text-primary text-[20px] flex justify-center items-center rounded-full font-semibold cursor-pointer disabled:bg-gray-200 disabled:border-gray-300 disabled:border disabled:text-gray-400"
-                      onClick={() => handlePledgeChange(500)}
-                      disabled={formData.pledge >= MAX_PLEDGE}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="max-w-full mx-auto">
-                  <label htmlFor="amount" className="sr-only">
-                    Amount
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 start-0 top-0 flex items-center ps-3.5 pointer-events-none text-dark font-sans">
-                      $
+                    <div className="flex justify-between mb-2 gap-x-1">
+                      <button
+                        type="button"
+                        className="w-[46px] h-[46px] bg-primary/30 text-primary text-[20px] flex justify-center items-center rounded-full font-semibold cursor-pointer disabled:bg-gray-200 disabled:border-gray-300 disabled:border disabled:text-gray-400"
+                        onClick={() => handleChaiChange(-1)}
+                        disabled={formData.chaiCount <= MIN_CHAI}
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min={MIN_CHAI}
+                        max={MAX_CHAI}
+                        name="chaiCount"
+                        value={formData.chaiCount}
+                        onChange={handleInputChange}
+                        className="bg-card text-dark my-0 mx-0.5 inline-block align-top text-[18px] leading-[30px] py-2 px-0.5 max-w-[55px] min-w-[70px] border-[0.5px] border-gray-300 rounded-[100px] text-center bg-none shadow-none transition-all outline-none focus:border-dark ap-none"
+                      />
+                      <button
+                        type="button"
+                        className="w-[46px] h-[46px] bg-primary/30 text-primary text-[20px] flex justify-center items-center rounded-full font-semibold cursor-pointer disabled:bg-gray-200 disabled:border-gray-300 disabled:border disabled:text-gray-400"
+                        onClick={() => handleChaiChange(1)}
+                        disabled={formData.chaiCount >= MAX_CHAI}
+                      >
+                        +
+                      </button>
                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="max-w-full mx-auto">
+                    <label htmlFor="amount" className="sr-only">
+                      Amount
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 start-0 top-0 flex items-center ps-3.5 pointer-events-none text-dark font-sans">
+                        $
+                      </div>
+                      <input
+                        type="number"
+                        id="amount"
+                        name="amount"
+                        value={formData.amount}
+                        onChange={handleInputChange}
+                        min={CHAI_PRICE}
+                        max={MAX_CHAI * CHAI_PRICE}
+                        step="0.01"
+                        className="bg-form border font-semibold border-gray-300 focus:ring-0 focus:ring-offset-0 font-sans text-dark text-base h-[46px] leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full ps-7 py-2 px-4"
+                      />
+                    </div>
+                    {formErrors.amount && (
+                      <p className="mt-2 text-sm text-red-400">
+                        {formErrors.amount}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="max-w-full mx-auto">
+                    <label htmlFor="name" className="sr-only">
+                      Your Name
+                    </label>
                     <input
-                      type="number"
-                      id="amount"
-                      name="pledge"
-                      value={formData.pledge / 100}
-                      onChange={(e) =>
-                        handleInputChange({
-                          target: {
-                            name: "pledge",
-                            value: Math.min(
-                              MAX_PLEDGE,
-                              Math.max(MIN_PLEDGE, e.target.value * 100)
-                            ),
-                          },
-                        })
-                      }
-                      className="bg-form border font-semibold border-gray-300 font-sans text-dark text-base h-[46px] leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full ps-7 py-2 px-4"
-                      placeholder="5"
+                      type="text"
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="bg-form border font-semibold border-gray-300 focus:ring-0 focus:ring-offset-0 font-sans text-dark text-base h-[46px] leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full py-2 px-4 placeholder:font-normal"
+                      placeholder="Your name or nickname"
                     />
                   </div>
-                  {formErrors.pledge && (
-                    <p className="mt-2 text-sm text-red-400">
-                      {formErrors.pledge}
-                    </p>
-                  )}
-                </div>
 
-                <div className="max-w-full mx-auto">
-                  <label htmlFor="name" className="sr-only">
-                    Your Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="bg-form border font-semibold border-gray-300 font-sans text-dark text-base h-[46px] leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full py-2 px-4 placeholder:font-normal"
-                    placeholder="Your name or nickname"
-                  />
-                </div>
+                  <div className="max-w-full mx-auto">
+                    <label htmlFor="message" className="sr-only">
+                      Message
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      className="bg-form border font-semibold border-gray-300 focus:ring-0 focus:ring-offset-0 font-sans text-dark text-base h-auto leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full py-2 px-4 placeholder:font-normal"
+                      rows={2}
+                      placeholder="Your message (optional)"
+                      maxLength={280}
+                    ></textarea>
+                  </div>
 
-                <div className="max-w-full mx-auto">
-                  <label htmlFor="email" className="sr-only">
-                    Your Email <span className="text-red-400">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="bg-form border font-semibold border-gray-300 font-sans text-dark text-base h-[46px] leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full py-2 px-4 placeholder:font-normal"
-                    placeholder="Your email"
-                  />
-                  {formErrors.email && (
-                    <p className="mt-2 text-sm text-red-400">
-                      {formErrors.email}
-                    </p>
-                  )}
-                </div>
-
-                <div className="max-w-full mx-auto">
-                  <label htmlFor="message" className="sr-only">
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    className="bg-form border font-semibold border-gray-300 font-sans text-dark text-base h-auto leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full py-2 px-4 placeholder:font-normal"
-                    rows={2}
-                    placeholder="Your message (optional)"
-                    maxLength={280}
-                  ></textarea>
-                </div>
-
-                <div className="flex items-center">
-                  <input
-                    id="isPrivate"
-                    type="checkbox"
-                    name="isPrivate"
-                    checked={formData.isPrivate}
-                    onChange={handleInputChange}
-                    className="w-4 h-4 text-dark bg-form border-gray-300 rounded outline-none"
-                  />
-                  <label
-                    htmlFor="isPrivate"
-                    className="ms-2 text-base text-dark font-semibold"
-                  >
-                    Private message?{" "}
-                    <span
-                      className="text-muted"
-                      title="Only you and the creator will see this message"
+                  <div className="flex items-center">
+                    <input
+                      id="isPrivate"
+                      type="checkbox"
+                      name="isPrivate"
+                      checked={formData.isPrivate}
+                      onChange={handleInputChange}
+                      className="w-4 h-4 text-dark bg-form focus:ring-0 focus:ring-offset-0 border-gray-300 rounded outline-none"
+                    />
+                    <label
+                      htmlFor="isPrivate"
+                      className="ms-2 text-base text-dark font-semibold inline-flex gap-x-2 h-4 w-4 rounded outline-none border-gray-300 whitespace-nowrap items-center"
                     >
-                      ℹ️
-                    </span>
-                  </label>
-                </div>
+                      Private message?{" "}
+                      <span
+                        className="text-muted"
+                        title="Only you and the creator will see this message"
+                      >
+                        <Info size={20} />
+                      </span>
+                    </label>
+                  </div>
 
+                  <button
+                    type="submit"
+                    className="bg-primary text-white rounded-full w-full flex items-center justify-center font-semibold font-sans border-none py-3 px-4"
+                  >
+                    Donate {formData.chaiCount} chai ($
+                    {(formData.chaiCount * CHAI_PRICE).toFixed(2)})
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {/* Products Section */}
+        {PRODUCTS.map((product) => (
+          <div key={product.id} className="col-span-">
+            <div className="p-6 rounded-3xl bg-card w-full space-y-4">
+              <div className="overflow-hidden rounded-lg group bg-accent">
+                <div
+                  className="w-full bg-green-200 rounded-lg aspect-video bg-cover bg-center h-auto relative z-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
+                  style={{ backgroundImage: `url(${product.imageUrl})` }}
+                ></div>
+              </div>
+              <div className="mb-4 flex justify-between items-center">
+                <span className="font-semibold text-xl max-w-[70%] font-sans line-clamp-2">
+                  {product.title}
+                </span>
+                <span className="font-semibold text-2xl font-sans">
+                  ${product.price / 100}
+                </span>
+              </div>
+              <div className="w-full max-w-[600px] min-w-[240px] mb-2">
+                <p className="w-full overflow-hidden para-control !line-clamp-3">
+                  {product.description}
+                </p>
+              </div>
+              <div className="flex w-full justify-between items-center">
                 <button
-                  type="submit"
-                  className="bg-primary text-white rounded-full w-full flex items-center justify-center font-semibold font-sans border-none py-2 px-4"
+                  type="button"
+                  className="btn-primary text-dark border-gray-300 border rounded-lg"
+                  onClick={() => openProductModal(product)}
                 >
-                  Donate ${(formData.pledge / 100).toFixed(2)}
+                  Details
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary bg-primary border-none font-semibold text-center text-white rounded-full"
+                  onClick={() => handleProductPledge(product)}
+                >
+                  {`Pledge $${product.price / 100}`}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
+        ))}
+
+        {selectedProduct && (
+          <ProductModal
+            product={selectedProduct}
+            isOpen={isProductModalOpen}
+            onClose={closeProductModal}
+          />
+        )}
       </div>
-
-      {/* Products Section */}
-      {PRODUCTS.map((product) => (
-        <div key={product.id} className="col-span-1">
-          <div className="p-4 rounded-[18px] w-full bg-card space-y-4">
-            <div
-              className="w-full bg-green-200 rounded-lg aspect-video bg-cover bg-center"
-              style={{ backgroundImage: `url(${product.imageUrl})` }}
-            />
-            <div className="mb-4 flex justify-between items-center">
-              <span className="font-semibold text-xl max-w-[50%] font-sans">
-                {product.title}
-              </span>
-              <span className="font-semibold text-2xl font-sans">
-                ${product.price / 100}
-              </span>
-            </div>
-            <div className="w-full max-w-[600px] min-w-[240px] mb-2">
-              <p className="w-full overflow-hidden para-control !line-clamp-3">
-                {product.description}
-              </p>
-            </div>
-            <div className="flex w-full justify-between items-center">
-              <button
-                type="button"
-                className="btn-primary text-dark border-gray-300 border"
-                onClick={() => openProductModal(product)}
-              >
-                Details
-              </button>
-              <button
-                type="button"
-                className="btn-primary bg-primary border-none font-semibold text-center text-white rounded-full"
-                onClick={() => handleProductPledge(product)}
-              >
-                {product.pledgeText}
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
-
-      {selectedProduct && (
-        <ProductModal
-          product={selectedProduct}
-          isOpen={isProductModalOpen}
-          onClose={closeProductModal}
-        />
-      )}
-    </div>
+      <PaymentMethod
+        isPaymentModalOpen={isPaymentModalOpen}
+        setIsPaymentModalOpen={setIsPaymentModalOpen}
+        config={config}
+      />
+    </>
   );
 }

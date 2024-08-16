@@ -11,7 +11,7 @@ export default function Info() {
   };
 
   return (
-    <div className="p-4 rounded-[18px] w-full bg-card">
+    <div className="p-6 rounded-3xl w-full bg-card">
       <div className="mb-4 flex justify-between items-center">
         <span className="font-semibold sr-only">Info</span>
       </div>
@@ -39,7 +39,9 @@ export default function Info() {
 
         <div
           className={`overflow-hidden transition-all duration-500 ease-in-out ${
-            isExpanded ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+            isExpanded
+              ? "max-h-[1000px] opacity-100 space-y-4"
+              : "max-h-0 opacity-0"
           }`}
         >
           <p className="w-full overflow-hidden para-control">

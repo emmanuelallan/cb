@@ -71,7 +71,7 @@ const additionalSongs = [
 const AudioPlayer = () => {
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [duration, setDuration] = useState(0);
+  const [durations, setDurations] = useState(songs.map(() => 0));
   const [currentTime, setCurrentTime] = useState(0);
   const waveSurferRef = useRef(null);
   const waveFormRef = useRef(null);
@@ -128,17 +128,29 @@ const AudioPlayer = () => {
 
       waveSurferRef.current = wavesurfer;
 
-      await wavesurfer.load(currentSong.src);
+      wavesurfer.load(currentSong.src);
 
       wavesurfer.on("ready", () => {
-        setDuration(wavesurfer.getDuration());
+        const newDuration = wavesurfer.getDuration();
+        setDurations((prevDurations) =>
+          prevDurations.map((d, i) =>
+            i === currentSongIndex ? newDuration : d
+          )
+        );
+
+        if (isPlaying) {
+          wavesurfer.play();
+        }
       });
 
       wavesurfer.on("audioprocess", () => {
         setCurrentTime(wavesurfer.getCurrentTime());
       });
 
-      wavesurfer.on("finish", handleNext);
+      wavesurfer.on("finish", () => {
+        setIsPlaying(false);
+        handleNext();
+      });
     };
 
     initializeWaveSurfer();
@@ -148,41 +160,70 @@ const AudioPlayer = () => {
         wavesurfer.destroy();
       }
     };
-  }, [currentSongIndex, currentSong.src]);
+  }, [currentSong.src, currentSongIndex, isPlaying]);
 
-  const handlePlayPause = () => {
+  useEffect(() => {
     if (waveSurferRef.current) {
       if (isPlaying) {
-        waveSurferRef.current.pause();
-      } else {
         waveSurferRef.current.play();
+      } else {
+        waveSurferRef.current.pause();
       }
-      setIsPlaying(!isPlaying);
     }
+  }, [isPlaying]);
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
   };
 
   const handleNext = () => {
+    if (waveSurferRef.current) {
+      waveSurferRef.current.stop(); // Stop the current playback
+    }
     setCurrentSongIndex((prevIndex) => (prevIndex + 1) % songs.length);
+    setIsPlaying(true);
   };
 
   const handlePrev = () => {
+    if (waveSurferRef.current) {
+      waveSurferRef.current.stop(); // Stop the current playback
+    }
     setCurrentSongIndex(
       (prevIndex) => (prevIndex - 1 + songs.length) % songs.length
     );
+    setIsPlaying(true);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (waveSurferRef.current) {
+        waveSurferRef.current.destroy();
+      }
+    };
+  }, []);
+
+  const formatTime = (time) => {
+    if (isNaN(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   return (
-    <div className="p-4 rounded-[18px] w-full bg-card mt-4">
+    <div className="p-6 rounded-3xl w-full bg-card mt-4">
       <div className="mb-4 flex justify-between items-center">
         <span className="font-semibold">EP Preview</span>
       </div>
 
-      <div className="max-w-lg mx-auto p-4 border border-border text-dark rounded-lg bg-card">
+      <div className="max-w-lg mx-auto p-4 border border-border text-dark rounded-3xl bg-card">
         <h2 className="text-xl font-bold mb-2 animate-pulse">
           {currentSong.title}
         </h2>
         <p className="text-sm mb-4">{currentSong.artist}</p>
-        <div ref={waveFormRef} className="mb-4 border py-2 border-border"></div>
+        <div
+          ref={waveFormRef}
+          className="mb-4 border py-2 border-border rounded-lg"
+        ></div>
         <div className="flex justify-between items-center mt-4">
           <button onClick={handlePrev}>
             <ChevronFirst className="text-2xl" />
@@ -199,22 +240,20 @@ const AudioPlayer = () => {
           </button>
         </div>
         <div className="mt-2 text-xs text-gray-400">
-          <span>
-            {new Date(currentTime * 1000).toISOString().substring(14, 19)}
-          </span>{" "}
-          /{" "}
-          <span>
-            {new Date(duration * 1000).toISOString().substring(14, 19)}
-          </span>
+          <span>{formatTime(currentTime)}</span> /{" "}
+          <span>{formatTime(durations[currentSongIndex])}</span>
         </div>
         <ul className="mt-4">
           {songs.map((song, index) => (
             <li
               key={index}
               className={`cursor-pointer px-3 py-4 text-sm border-border border ${
-                currentSongIndex === index && "border-accent bg-accent/20"
+                currentSongIndex === index && "border-primary bg-primary/10"
               } rounded-lg mb-2 flex justify-between items-center`}
-              onClick={() => setCurrentSongIndex(index)}
+              onClick={() => {
+                setCurrentSongIndex(index);
+                setIsPlaying(true);
+              }}
             >
               <span className="flex items-center gap-x-4 font-medium">
                 <span>{index === 0 ? "Ⅰ" : "ⅠⅠ"}</span>
@@ -224,7 +263,7 @@ const AudioPlayer = () => {
                 </span>
               </span>
               <span className="text-xs font-normal">
-                {new Date(duration * 1000).toISOString().substring(14, 19)}
+                {formatTime(durations[index])}
               </span>
             </li>
           ))}

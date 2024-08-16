@@ -60,7 +60,7 @@ export default function Goal() {
     <div className="relative max-w-[550px] h-auto w-full md:transform-none bottom-auto top-0 will-change-transform translate-z lg:w-full lg:max-w-[550px] lg:block md:max-w-[vw] md:h-auto md:contents">
       <div className="m-0 md:contents">
         <div className="mb-4 md:max-w-[510px] md:w-full md:py-0 md:px-2.5 md:order-2">
-          <div className="text-center rounded-[18px] p-4 w-full bg-card">
+          <div className="text-center rounded-3xl p-6 w-full bg-card">
             <div className="w-full">
               <div className="float-right">
                 <button
@@ -200,14 +200,14 @@ export default function Goal() {
                       <Link className="mx-2" />
 
                       <input
-                        className="w-full outline-none bg-transparent text-sm"
+                        className="w-full outline-0 focus:ring-0 focus:ring-offset-0 bg-transparent text-sm border-none"
                         type="text"
                         value="https://citybega.com/emmanuelallan/goal?g=1"
                         readOnly
                       />
 
                       <button
-                        className="bg-disabled text-dark text-sm rounded-md px-4 py-2 mr-2 hover:bg-dark hover:text-white"
+                        className="bg-secondary text-dark text-sm rounded-md px-4 transition-all duration-300 py-2 mr-2 hover:bg-dark hover:text-white"
                         onClick={() => shareOn("copy")}
                       >
                         <Copy />

@@ -98,7 +98,7 @@ button, input, select, textarea {
     height: 12px;
     background-color: #c4c4c438;
     border-radius: 500px;
-    margin-bottom: 2px;
+    margin-bottom: .5rem;
     overflow: hidden;
 }
 
