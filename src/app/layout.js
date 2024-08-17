@@ -2,7 +2,7 @@ import Notify from "@/components/notify";
 import "./globals.css";
 
 export const metadata = {
-  title: "Healing Waves",
+  title: "Healing Waves: A Lo-FI Afrobeats Journey",
   description: "A Lo-FI Afrobeats Journey",
 };
 
