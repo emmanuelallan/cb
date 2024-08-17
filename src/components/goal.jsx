@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, Fragment, useEffect } from "react";
 import { toast } from "sonner";
 import { Copy, Link, X } from "lucide-react";
 import {
@@ -12,13 +12,37 @@ import {
 } from "@headlessui/react";
 
 export default function Goal() {
-  const stats = {
-    goal: 1500,
-    current: 200,
-  };
+  const [stats, setStats] = useState({
+    target: 0,
+    current: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGoal = async () => {
+      try {
+        const response = await fetch("/api/goals");
+        if (!response.ok) {
+          throw new Error("Failed to fetch goal");
+        }
+        const data = await response.json();
+        setStats({
+          target: data.target,
+          current: data.current,
+        });
+      } catch (error) {
+        console.error("Error fetching goal:", error);
+        toast.error("Failed to load goal data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGoal();
+  }, []);
 
   const calcPercent = () => {
-    return ((stats.current / stats.goal) * 100).toFixed(2);
+    return ((stats.current / stats.target) * 100).toFixed(2);
   };
 
   const [isOpen, setIsOpen] = useState(false);
@@ -32,24 +56,24 @@ export default function Goal() {
   };
 
   const shareOn = (platform) => {
-    const shareUrl = "https://citybega.com/emmanuelallan/goal?g=1";
+    const shareUrl = "https://remotask.org/emmanuelallan/target?g=1";
     if (platform === "copy") {
       navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied to clipboard!");
     } else if (platform === "twitter") {
       window.open(
-        `https://twitter.com/intent/tweet?url=${shareUrl}&text=Help%20Emmanuel%20Allan%20by%20sharing%20their%20Ko-fi%20goal!`,
-        "_blank"
+        `https://twitter.com/intent/tweet?url=${shareUrl}&text=Help%20Emmanuel%20Allan%20by%20sharing%20their%20Ko-fi%20target!`,
+        "_blank",
       );
     } else if (platform === "facebook") {
       window.open(
         `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
-        "_blank"
+        "_blank",
       );
     } else if (platform === "reddit") {
       window.open(
         `https://www.reddit.com/submit?url=${shareUrl}&title=Support%20Emmanuel%20Allan%20on%20Ko-fi`,
-        "_blank"
+        "_blank",
       );
     } else if (platform === "discord") {
       window.open(`https://discord.com/channels/@me`, "_blank");
@@ -93,7 +117,7 @@ export default function Goal() {
 
               <div className="text-left mb-2">
                 <span className="font-bold">{calcPercent()}% </span>
-                <span className="text-base">of ${stats.goal} goal</span>
+                <span className="text-base">of ${stats.target} goal</span>
               </div>
 
               <div className="mb-4 items-center flex-col justify-center flex medium:hidden">

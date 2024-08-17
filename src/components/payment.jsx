@@ -1,85 +1,34 @@
 "use client";
 
-import { useState, Fragment, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Image from "next/image";
-import {
-  Dialog,
-  Transition,
-  TransitionChild,
-  DialogPanel,
-  DialogTitle,
-} from "@headlessui/react";
+import { Dialog, Transition } from "@headlessui/react";
 import { Info, X } from "lucide-react";
 import { toast } from "sonner";
-import PaymentMethod from "./paymentMethod";
+import PaypalHandler from "@/components/paypalHandler";
+import { PRODUCTS, MIN_CHAI, MAX_CHAI, CHAI_PRICE } from "@/utils/payment";
 
-const PRODUCTS = [
-  {
-    id: 1,
-    title: "Double Gatefold, White Vinyl Pack",
-    price: 3699,
-    description:
-      "Limited edition Double Gatefold, White Vinyl Pack of Obsession...",
-    imageUrl: "/images/vinyl.webp",
-  },
-  {
-    id: 2,
-    title: "Chillhop Essentials - Winter 2019 CD - Limited Edition",
-    price: 1875,
-    description:
-      "Limited edition Double Gatefold, White Vinyl Pack of Obsession...",
-    imageUrl: "/images/disk.webp",
-  },
-  {
-    id: 3,
-    title: "Chillhop Essentials - Summer 2023 Cassette Tape - Limited Edition",
-    price: 2224,
-    description:
-      "Limited edition Double Gatefold, White Vinyl Pack of Obsession...",
-    imageUrl: "/images/tape.webp",
-  },
-];
-
-const MIN_CHAI = 1;
-const MAX_CHAI = 3333;
-const CHAI_PRICE = 5;
+const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 export default function Payment() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     chaiCount: MIN_CHAI,
     amount: MIN_CHAI * CHAI_PRICE,
     name: "",
+    email: "",
     message: "",
     isPrivate: false,
   });
   const [formErrors, setFormErrors] = useState({});
-  const [shouldScrollToTop, setShouldScrollToTop] = useState(false);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (shouldScrollToTop) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      setShouldScrollToTop(false);
-    }
-  }, [shouldScrollToTop]);
-
-  const openProductModal = (product) => {
-    setSelectedProduct(product);
-    setIsProductModalOpen(true);
-  };
-
-  const closeProductModal = () => {
-    setIsProductModalOpen(false);
-    setSelectedProduct(null);
-  };
-
-  const handleChaiChange = (amount) => {
+  const handleChaiChange = useCallback((amount) => {
     setFormData((prev) => {
       const newChaiCount = Math.max(
         MIN_CHAI,
-        Math.min(MAX_CHAI, prev.chaiCount + amount)
+        Math.min(MAX_CHAI, prev.chaiCount + amount),
       );
       return {
         ...prev,
@@ -87,171 +36,166 @@ export default function Payment() {
         amount: newChaiCount * CHAI_PRICE,
       };
     });
-  };
+  }, []);
 
-  const handleInputChange = (e) => {
+  const validateAmount = useCallback((amount) => {
+    if (amount < 5) return `Please enter an amount of at least \$5`;
+    if (amount > MAX_CHAI * CHAI_PRICE)
+      return `The maximum amount is $${MAX_CHAI * CHAI_PRICE}`;
+    return null;
+  }, []);
+
+  const handleInputChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
-    if (name === "amount") {
-      const numValue = parseFloat(value);
-      if (!isNaN(numValue)) {
-        const chaiCount = Math.floor(numValue / CHAI_PRICE);
-        setFormData((prev) => ({
-          ...prev,
-          chaiCount: Math.max(MIN_CHAI, Math.min(MAX_CHAI, chaiCount)),
-          amount: numValue,
-        }));
-
-        // Validate and set error
-        const error = validateAmount(numValue);
-        setFormErrors((prev) => ({ ...prev, amount: error }));
-      } else {
-        setFormData((prev) => ({ ...prev, amount: value }));
-        setFormErrors((prev) => ({
-          ...prev,
-          amount: "Please enter a valid number",
-        }));
-      }
-    } else if (name === "chaiCount") {
-      const numValue = parseInt(value, 10);
-      if (!isNaN(numValue)) {
-        const newChaiCount = Math.max(MIN_CHAI, Math.min(MAX_CHAI, numValue));
-        const newAmount = newChaiCount * CHAI_PRICE;
-        setFormData((prev) => ({
-          ...prev,
-          chaiCount: newChaiCount,
-          amount: newAmount,
-        }));
-
-        // Validate and set error
-        const error = validateAmount(newAmount);
-        setFormErrors((prev) => ({ ...prev, amount: error }));
-      }
-    } else {
-      setFormData((prev) => ({
+    setFormData((prev) => {
+      let newState = {
         ...prev,
         [name]: type === "checkbox" ? checked : value,
-      }));
-    }
-  };
+      };
 
-  const handleProductPledge = (product) => {
+      if (name === "amount") {
+        const numValue = parseInt(value, 10);
+        if (!isNaN(numValue)) {
+          newState = {
+            ...newState,
+            amount: numValue,
+            chaiCount: Math.max(MIN_CHAI, Math.floor(numValue / CHAI_PRICE)),
+          };
+        }
+      } else if (name === "chaiCount") {
+        const numValue = parseInt(value, 10);
+        if (!isNaN(numValue)) {
+          const newChaiCount = Math.max(MIN_CHAI, Math.min(MAX_CHAI, numValue));
+          newState = {
+            ...newState,
+            chaiCount: newChaiCount,
+            amount: newChaiCount * CHAI_PRICE,
+          };
+        }
+      }
+
+      return newState;
+    });
+
+    setFormErrors((prev) => {
+      let newErrors = { ...prev };
+      if (name === "email")
+        newErrors.email = validateEmail(value)
+          ? null
+          : "Please enter a valid email address";
+      return newErrors;
+    });
+  }, []);
+  const handleProductPledge = useCallback((product) => {
     const chaiCount = Math.floor(product.price / (CHAI_PRICE * 100));
     setFormData((prev) => ({
       ...prev,
       chaiCount: chaiCount,
-        amount: chaiCount * CHAI_PRICE,
+      amount: chaiCount * CHAI_PRICE,
     }));
-
-    setShouldScrollToTop(true);
-
     toast.success(
-      `Pledge amount updated to ${chaiCount} chai ($${(
-        chaiCount * CHAI_PRICE
-      ).toFixed(2)})`
+      `Pledge amount updated to ${chaiCount} chai ($${(chaiCount * CHAI_PRICE).toFixed(2)})`,
     );
-  };
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
-  const validateForm = () => {
+  const handleAmountBlur = useCallback(() => {
+    setFormData((prev) => ({
+      ...prev,
+      amount: Math.max(5, prev.amount),
+    }));
+    setFormErrors((prev) => ({
+      ...prev,
+      amount: validateAmount(Math.max(5, formData.amount)),
+    }));
+  }, [formData.amount, validateAmount]);
+
+  const validateForm = useCallback(() => {
     const errors = {};
-    // Add any other form validations here
+    if (!formData.email) errors.email = "At least an email address is required";
+    else if (!validateEmail(formData.email))
+      errors.email = "Please enter a valid email address";
+    const amountError = validateAmount(formData.amount);
+    if (amountError) errors.amount = amountError;
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [formData, validateAmount]);
 
-  const validateAmount = (amount) => {
-    if (amount < CHAI_PRICE) {
-      return `Please enter an amount of at least $${CHAI_PRICE}`;
-    } else if (amount > MAX_CHAI * CHAI_PRICE) {
-      return `The maximum amount is $${MAX_CHAI * CHAI_PRICE}`;
-    }
-    return null;
-  };
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (validateForm()) setIsPaymentModalOpen(true);
+    },
+    [validateForm],
+  );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
+  const config = useMemo(
+    () => ({
+      reference: new Date().getTime().toString(),
+      amount: formData.chaiCount * CHAI_PRICE,
+      currency: "USD",
+      customer: {
+        name: formData.name,
+        email: formData.email,
+      },
+    }),
+    [formData],
+  );
 
-      setIsPaymentModalOpen(true);
-    }
-  };
-
-  const config = {
-    reference: new Date().getTime().toString(),
-    amount: formData.chaiCount * CHAI_PRICE,
-    currency: "USD",
-  };
+  const clearForm = useCallback(() => {
+    setFormData({
+      chaiCount: MIN_CHAI,
+      amount: MIN_CHAI * CHAI_PRICE,
+      name: "",
+      email: "",
+      message: "",
+      isPrivate: false,
+    });
+    setFormErrors({});
+  }, []);
 
   const ProductModal = ({ product, isOpen, onClose }) => (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={onClose}>
-        <TransitionChild
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
-        </TransitionChild>
-
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <TransitionChild
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
+    <Transition show={isOpen} as={Dialog} onClose={onClose}>
+      <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+      <Dialog.Panel className="fixed inset-0 overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-3xl bg-card p-6 shadow-xl">
+            <Dialog.Title className="text-lg font-medium text-gray-900">
+              {product.title}
+            </Dialog.Title>
+            <button
+              className="absolute top-4 right-4 rounded-full p-2 hover:bg-gray-100"
+              onClick={onClose}
             >
-              <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-3xl bg-card p-6 text-left align-middle shadow-xl transition-all relative">
-                <DialogTitle
-                  as="h3"
-                  className="text-lg font-medium leading-6 text-gray-900 max-w-[92%]"
-                >
-                  {product.title}
-                </DialogTitle>
-                <button
-                  className="absolute top-4 right-4 hover:bg-gray-100 rounded-full h-8 w-8 flex items-center justify-center"
-                  onClick={onClose}
-                >
-                  <X />
-                </button>
-                <div className="mt-4">
-                  <div
-                    className="w-full bg-green-200 rounded-lg aspect-video bg-cover bg-center"
-                    style={{ backgroundImage: `url(${product.imageUrl})` }}
-                  />
-                  <p className="text-base text-gray-500 mt-4">
-                    {product.description}
-                  </p>
-                  <div className="text-center mt-4">
-                    <button
-                      type="button"
-                      className="bg-primary text-white py-2 px-4 rounded-full w-full"
-                      onClick={() => {
-                        handleProductPledge(product);
-                        onClose();
-                      }}
-                    >
-                      Pledge ${product.price / 100}
-                    </button>
-                  </div>
-                </div>
-              </DialogPanel>
-            </TransitionChild>
+              <X />
+            </button>
+            <div className="mt-4">
+              <div
+                className="aspect-video w-full rounded-lg bg-cover bg-center bg-green-200"
+                style={{ backgroundImage: `url(${product.imageUrl})` }}
+              />
+              <p className="mt-4 text-base text-gray-500">
+                {product.description}
+              </p>
+              <button
+                className="mt-4 w-full rounded-full bg-primary py-2 px-4 text-white"
+                onClick={() => {
+                  handleProductPledge(product);
+                  onClose();
+                }}
+              >
+                Pledge ${product.price / 100}
+              </button>
+            </div>
           </div>
         </div>
-      </Dialog>
+      </Dialog.Panel>
     </Transition>
   );
 
   return (
     <>
-      <div className="md:contents lg:max-w-[400px] lg:w-screen space-y-4 max-w-[400px] w-[400px] min-w-[285px] md:max-w-[550px] md:min-w-[285px]">
+      <div className="space-y-4 md:contents lg:max-w-[400px] lg:w-screen max-w-[400px] w-[400px] min-w-[285px] md:max-w-[550px] md:min-w-[285px]">
         <div className="col-span-1 before:table">
           <div className="h-auto max-w-screen w-full min-w-[285px] p-6 m-auto bg-card rounded-3xl shadow-none">
             <div className="flex flex-col w-full">
@@ -324,9 +268,15 @@ export default function Payment() {
                         name="amount"
                         value={formData.amount}
                         onChange={handleInputChange}
-                        min={CHAI_PRICE}
+                        onBlur={handleAmountBlur}
+                        min={5}
                         max={MAX_CHAI * CHAI_PRICE}
-                        step="0.01"
+                        step="1"
+                        onKeyDown={(e) => {
+                          if (e.key === "e" || e.key === ".") {
+                            e.preventDefault();
+                          }
+                        }}
                         className="bg-form border font-semibold border-gray-300 focus:ring-0 focus:ring-offset-0 font-sans text-dark text-base h-[46px] leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full ps-7 py-2 px-4"
                       />
                     </div>
@@ -350,6 +300,28 @@ export default function Payment() {
                       className="bg-form border font-semibold border-gray-300 focus:ring-0 focus:ring-offset-0 font-sans text-dark text-base h-[46px] leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full py-2 px-4 placeholder:font-normal"
                       placeholder="Your name or nickname"
                     />
+                  </div>
+
+                  <div className="max-w-full mx-auto">
+                    <label htmlFor="email" className="sr-only">
+                      Your Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`bg-form border font-semibold border-gray-300 focus:ring-0 focus:ring-offset-0 font-sans text-dark text-base h-[46px] leading-6 transition-all rounded-lg outline-none focus:border-dark block w-full py-2 px-4 placeholder:font-normal ${
+                        formErrors.email ? "border-red-500" : ""
+                      }`}
+                      placeholder="Your email address"
+                    />
+                    {formErrors.email && (
+                      <p className="mt-2 text-sm text-red-400">
+                        {formErrors.email}
+                      </p>
+                    )}
                   </div>
 
                   <div className="max-w-full mx-auto">
@@ -455,10 +427,11 @@ export default function Payment() {
           />
         )}
       </div>
-      <PaymentMethod
+      <PaypalHandler
         isPaymentModalOpen={isPaymentModalOpen}
         setIsPaymentModalOpen={setIsPaymentModalOpen}
         config={config}
+        onSuccess={clearForm}
       />
     </>
   );
