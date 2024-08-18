@@ -10,10 +10,12 @@ export default function Home() {
       <div className="max-w-[1500px] min-h-[80vh] w-full md:m-0 md:p-0 m-auto px-0">
         <div>
           {/* Cover Page */}
-          <section
-            className="profile-header"
-            style={{ backgroundImage: "url('/images/cover_image.png')" }}
-          />
+          <div className="md:py-0 md:px-2.5">
+            <section
+              className="profile-header"
+              style={{ backgroundImage: "url('/images/cover_image.png')" }}
+            />
+          </div>
 
           <section className="w-full flex justify-center items-center">
             <div className="w-screen max-w-none my-0 mx-auto pt-4 pb-10 min-h-screen">

@@ -210,80 +210,88 @@ const AudioPlayer = () => {
   };
 
   return (
-    <div className="p-6 rounded-3xl w-full bg-card mt-4">
-      <div className="mb-4 flex justify-between items-center">
-        <span className="font-semibold">EP Preview</span>
-      </div>
-
-      <div className="max-w-lg mx-auto p-4 border border-border text-dark rounded-3xl bg-card">
-        <h2 className="text-xl font-bold mb-2 animate-pulse">
-          {currentSong.title}
-        </h2>
-        <p className="text-sm mb-4">{currentSong.artist}</p>
-        <div
-          ref={waveFormRef}
-          className="mb-4 border py-2 border-border rounded-lg"
-        ></div>
-        <div className="flex justify-between items-center mt-4">
-          <button onClick={handlePrev}>
-            <ChevronFirst className="text-2xl" />
-          </button>
-          <button onClick={handlePlayPause}>
-            {isPlaying ? (
-              <Pause className="text-2xl" />
-            ) : (
-              <Play className="text-2xl" />
-            )}
-          </button>
-          <button onClick={handleNext}>
-            <ChevronLast className="text-2xl" />
-          </button>
+    <div className="mb-4 md:w-full md:px-2.5">
+      <div className="p-6 rounded-3xl w-full bg-card mt-4">
+        <div className="mb-4 flex justify-between items-center">
+          <span className="font-semibold">EP Preview</span>
         </div>
-        <div className="mt-2 text-xs text-gray-400">
-          <span>{formatTime(currentTime)}</span> /{" "}
-          <span>{formatTime(durations[currentSongIndex])}</span>
-        </div>
-        <ul className="mt-4">
-          {songs.map((song, index) => (
-            <li
-              key={index}
-              className={`cursor-pointer px-3 py-4 text-sm border-border border ${
-                currentSongIndex === index && "border-primary bg-primary/10"
-              } rounded-lg mb-2 flex justify-between items-center`}
-              onClick={() => {
-                setCurrentSongIndex(index);
-                setIsPlaying(true);
-              }}
-            >
-              <span className="flex items-center gap-x-4 font-medium">
-                <span>{index === 0 ? "Ⅰ" : "ⅠⅠ"}</span>
-                <span className="flex flex-col gap-y-0.5">
-                  <span>{song.title}</span>
-                  <span className="text-xs font-normal">{song.artist}</span>
-                </span>
-              </span>
-              <span className="text-xs font-normal">
-                {formatTime(durations[index])}
-              </span>
-            </li>
-          ))}
 
-          {additionalSongs.map((song, index) => (
-            <li
-              key={index}
-              className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center"
-            >
-              <span className="flex items-center gap-x-4 font-medium">
-                <span>{song.number}</span>
-                <span className="flex flex-col gap-y-0.5">
-                  <span>{song.title}</span>
-                  <span className="text-xs font-normal">{song.artist}</span>
+        <div className="max-w-lg mx-auto p-4 border border-border text-dark rounded-3xl bg-card">
+          <h2 className="text-xl font-bold mb-2 animate-pulse">
+            {currentSong.title}
+          </h2>
+          <p className="text-sm mb-4">{currentSong.artist}</p>
+          <div
+            ref={waveFormRef}
+            className="mb-4 border py-2 border-border rounded-lg"
+          ></div>
+          <div className="flex justify-between items-center mt-4">
+            <button onClick={handlePrev}>
+              <ChevronFirst className="text-2xl" />
+            </button>
+            <button onClick={handlePlayPause}>
+              {isPlaying ? (
+                <Pause className="text-2xl" />
+              ) : (
+                <Play className="text-2xl" />
+              )}
+            </button>
+            <button onClick={handleNext}>
+              <ChevronLast className="text-2xl" />
+            </button>
+          </div>
+          <div className="mt-2 text-xs text-gray-400">
+            <span>{formatTime(currentTime)}</span> /{" "}
+            <span>{formatTime(durations[currentSongIndex])}</span>
+          </div>
+          <ul className="mt-4">
+            {songs.map((song, index) => (
+              <li
+                key={index}
+                className={`cursor-pointer px-3 py-4 text-sm border-border border ${
+                  currentSongIndex === index && "border-primary bg-primary/10"
+                } rounded-lg mb-2 flex justify-between items-center`}
+                onClick={() => {
+                  setCurrentSongIndex(index);
+                  setIsPlaying(true);
+                }}
+              >
+                <span className="flex items-center gap-x-4 font-medium">
+                  <span>{index === 0 ? "Ⅰ" : "ⅠⅠ"}</span>
+                  <span className="flex flex-col gap-y-0.5">
+                    <span>{song.title}</span>
+                    <span className="text-xs font-normal">{song.artist}</span>
+                  </span>
                 </span>
-              </span>
-              <span>{song.duration}</span>
-            </li>
-          ))}
-        </ul>
+                <span className="text-xs font-normal">
+                  {formatTime(durations[index])}
+                </span>
+              </li>
+            ))}
+
+            {additionalSongs.map((song, index) => (
+              <li
+                key={index}
+                className="cursor-not-allowed px-3 py-4 text-sm border-border border rounded-lg mb-2 flex justify-between items-center"
+              >
+                <span className="flex items-center gap-x-4 font-medium">
+                  <span>{song.number}</span>
+                  <span className="flex flex-col gap-y-0.5">
+                    <span>{song.title}</span>
+                    <span className="text-xs font-normal">{song.artist}</span>
+                  </span>
+                </span>
+                <span>{song.duration}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-4 text-xs italic text-gray-400">
+            <p>Scheduled Release Date: November 2024</p>
+            <p>Total Tracks: 10</p>
+            <p>Total Duration: Approximately 45 minutes</p>
+          </div>
+        </div>
       </div>
     </div>
   );

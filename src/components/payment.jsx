@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, Fragment } from "react";
 import Image from "next/image";
-import { Dialog, Transition } from "@headlessui/react";
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  Transition,
+  TransitionChild,
+} from "@headlessui/react";
 import { Info, X } from "lucide-react";
 import { toast } from "sonner";
 import PaypalHandler from "@/components/paypalHandler";
@@ -28,7 +34,7 @@ export default function Payment() {
     setFormData((prev) => {
       const newChaiCount = Math.max(
         MIN_CHAI,
-        Math.min(MAX_CHAI, prev.chaiCount + amount),
+        Math.min(MAX_CHAI, prev.chaiCount + amount)
       );
       return {
         ...prev,
@@ -86,6 +92,7 @@ export default function Payment() {
       return newErrors;
     });
   }, []);
+
   const handleProductPledge = useCallback((product) => {
     const chaiCount = Math.floor(product.price / (CHAI_PRICE * 100));
     setFormData((prev) => ({
@@ -94,7 +101,7 @@ export default function Payment() {
       amount: chaiCount * CHAI_PRICE,
     }));
     toast.success(
-      `Pledge amount updated to ${chaiCount} chai ($${(chaiCount * CHAI_PRICE).toFixed(2)})`,
+      `Pledge amount updated to ${chaiCount} chai ($${(chaiCount * CHAI_PRICE).toFixed(2)})`
     );
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
@@ -126,7 +133,7 @@ export default function Payment() {
       e.preventDefault();
       if (validateForm()) setIsPaymentModalOpen(true);
     },
-    [validateForm],
+    [validateForm]
   );
 
   const config = useMemo(
@@ -139,7 +146,7 @@ export default function Payment() {
         email: formData.email,
       },
     }),
-    [formData],
+    [formData]
   );
 
   const clearForm = useCallback(() => {
@@ -154,47 +161,122 @@ export default function Payment() {
     setFormErrors({});
   }, []);
 
-  const ProductModal = ({ product, isOpen, onClose }) => (
-    <Transition show={isOpen} as={Dialog} onClose={onClose}>
-      <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
-      <Dialog.Panel className="fixed inset-0 overflow-y-auto">
-        <div className="flex min-h-full items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-3xl bg-card p-6 shadow-xl">
-            <Dialog.Title className="text-lg font-medium text-gray-900">
-              {product.title}
-            </Dialog.Title>
-            <button
-              className="absolute top-4 right-4 rounded-full p-2 hover:bg-gray-100"
-              onClick={onClose}
-            >
-              <X />
-            </button>
-            <div className="mt-4">
-              <div
-                className="aspect-video w-full rounded-lg bg-cover bg-center bg-green-200"
-                style={{ backgroundImage: `url(${product.imageUrl})` }}
-              />
-              <p className="mt-4 text-base text-gray-500">
-                {product.description}
-              </p>
-              <button
-                className="mt-4 w-full rounded-full bg-primary py-2 px-4 text-white"
-                onClick={() => {
-                  handleProductPledge(product);
-                  onClose();
-                }}
+  const openProductModal = useCallback((product) => {
+    setSelectedProduct(product);
+    setIsProductModalOpen(true);
+  }, []);
+
+  const closeProductModal = useCallback(() => {
+    setSelectedProduct(null);
+    setIsProductModalOpen(false);
+  }, []);
+
+  const ProductModal = ({ product, isOpen, onClose }) => {
+    if (!product) return null;
+
+    return (
+      <Transition show={isOpen} as={Fragment}>
+        <Dialog onClose={onClose} className="relative z-50">
+          <TransitionChild
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          </TransitionChild>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <TransitionChild
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
               >
-                Pledge ${product.price / 100}
-              </button>
+                <DialogPanel className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl relative">
+                  <DialogTitle className="text-lg font-medium text-gray-900">
+                    {product.title}
+                  </DialogTitle>
+                  <button
+                    onClick={onClose}
+                    className="cursor-pointer rounded-full flex items-center justify-center tw-scale-on-hover close-bg-transition hover:before:bg-dark/5 w-8 h-8 absolute right-4 top-4"
+                  >
+                    <X />
+                  </button>
+
+                  <div className="mt-4">
+                    <div
+                      className="aspect-video w-full rounded-lg bg-cover bg-center bg-green-200"
+                      style={{ backgroundImage: `url(${product.imageUrl})` }}
+                    />
+                    <p className="mt-4 text-base text-gray-500">
+                      {product.description}
+                    </p>
+
+                    {/* Price Section */}
+                    <div className="mt-4">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Price: ${product.price / 100}
+                      </h3>
+                    </div>
+
+                    {/* Tracklist Section */}
+                    {product.tracklist && (
+                      <div className="mt-4">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Tracklist
+                        </h3>
+                        <ul className="list-disc list-inside text-gray-500 mt-2">
+                          {product.tracklist.map((track, index) => (
+                            <li key={index}>{track}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Special Features Section */}
+                    {product.specialFeatures && (
+                      <div className="mt-4">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Special Features
+                        </h3>
+                        <ul className="list-disc list-inside text-gray-500 mt-2">
+                          {product.specialFeatures.map((feature, index) => (
+                            <li key={index}>{feature}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Purchase Button */}
+                    <button
+                      className="mt-4 w-full bg-primary text-white rounded-full flex items-center justify-center font-semibold font-sans border-none py-3 px-4"
+                      onClick={() => {
+                        handleProductPledge(product);
+                        onClose();
+                      }}
+                    >
+                      Pledge ${product.price / 100}
+                    </button>
+                  </div>
+                </DialogPanel>
+              </TransitionChild>
             </div>
           </div>
-        </div>
-      </Dialog.Panel>
-    </Transition>
-  );
+        </Dialog>
+      </Transition>
+    );
+  };
 
   return (
-    <>
+    <div id="donate" className="md:w-full md:py-0 md:px-2.5">
       <div className="space-y-4 md:contents lg:max-w-[400px] lg:w-screen max-w-[400px] w-[400px] min-w-[285px] md:max-w-[550px] md:min-w-[285px]">
         <div className="col-span-1 before:table">
           <div className="h-auto max-w-screen w-full min-w-[285px] p-6 m-auto bg-card rounded-3xl shadow-none">
@@ -210,7 +292,7 @@ export default function Payment() {
                   <div className="w-full flex justify-between items-center">
                     <div className="w-auto justify-start mb-4 flex flex-row items-center">
                       <Image
-                        src="/images/cup-border.webp"
+                        src="/images/chai.svg"
                         alt="Donation cup"
                         className="mr-2 object-cover bg-center align-middle"
                         width={43}
@@ -433,6 +515,6 @@ export default function Payment() {
         config={config}
         onSuccess={clearForm}
       />
-    </>
+    </div>
   );
 }

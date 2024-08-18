@@ -6,6 +6,7 @@ import {
   DialogPanel,
   DialogTitle,
   Transition,
+  TransitionChild,
 } from "@headlessui/react";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
@@ -74,7 +75,7 @@ export default function PaypalHandler({
       console.error("Error processing payment:", error);
       toast.error(
         error.response?.data?.error ||
-          "An error occurred during payment. Please try again.",
+          "An error occurred during payment. Please try again."
       );
     } finally {
       setIsProcessing(false);
@@ -130,7 +131,7 @@ export default function PaypalHandler({
   return (
     <Transition appear show={isPaymentModalOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={handleCloseModal}>
-        <Transition.Child
+        <TransitionChild
           as={Fragment}
           enter="ease-out duration-300"
           enterFrom="opacity-0"
@@ -140,12 +141,12 @@ export default function PaypalHandler({
           leaveTo="opacity-0"
         >
           <div className="fixed inset-0 bg-black bg-opacity-50" />
-        </Transition.Child>
+        </TransitionChild>
 
         <div className="fixed inset-0 overflow-y-auto transition-all duration-500">
           {isPaymentSuccessful && <Confetti />}
           <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0 scale-95"
@@ -217,7 +218,7 @@ export default function PaypalHandler({
                     : renderPaymentForm()}
                 </div>
               </DialogPanel>
-            </Transition.Child>
+            </TransitionChild>
           </div>
         </div>
       </Dialog>

@@ -2,7 +2,7 @@
 
 import { useState, Fragment, useEffect } from "react";
 import { toast } from "sonner";
-import { Copy, Link, X } from "lucide-react";
+import { Copy, LinkIcon, X } from "lucide-react";
 import {
   Dialog,
   DialogPanel,
@@ -10,6 +10,7 @@ import {
   Transition,
   TransitionChild,
 } from "@headlessui/react";
+import Link from "next/link";
 
 export default function Goal() {
   const [stats, setStats] = useState({
@@ -56,24 +57,24 @@ export default function Goal() {
   };
 
   const shareOn = (platform) => {
-    const shareUrl = "https://remotask.org/emmanuelallan/target?g=1";
+    const shareUrl = "https://remotask.org";
     if (platform === "copy") {
       navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied to clipboard!");
     } else if (platform === "twitter") {
       window.open(
-        `https://twitter.com/intent/tweet?url=${shareUrl}&text=Help%20Emmanuel%20Allan%20by%20sharing%20their%20Ko-fi%20target!`,
-        "_blank",
+        `https://twitter.com/intent/tweet?url=${shareUrl}&text=Healing%20Waves:%20A%20Lo-Fi%20Afrobeat%20Journey!`,
+        "_blank"
       );
     } else if (platform === "facebook") {
       window.open(
         `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
-        "_blank",
+        "_blank"
       );
     } else if (platform === "reddit") {
       window.open(
         `https://www.reddit.com/submit?url=${shareUrl}&title=Support%20Emmanuel%20Allan%20on%20Ko-fi`,
-        "_blank",
+        "_blank"
       );
     } else if (platform === "discord") {
       window.open(`https://discord.com/channels/@me`, "_blank");
@@ -122,9 +123,12 @@ export default function Goal() {
 
               <div className="mb-4 items-center flex-col justify-center flex medium:hidden">
                 <div className="items-center justify-between flex w-full">
-                  <button className="btn-primary bg-primary border-primary text-base h-[46px] rounded-[100px] w-full justify-center font-sans cursor-pointer">
+                  <Link
+                    href="#donate"
+                    className="btn-primary bg-primary border-primary text-base h-[46px] rounded-[100px] w-full justify-center font-sans cursor-pointer"
+                  >
                     <span>Donate</span>
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -221,12 +225,12 @@ export default function Goal() {
                     <p className="text-sm mt-4 mb-2">Or copy link</p>
 
                     <div className="w-full rounded-md border border-gray-300 p-2 flex justify-between items-center py-2">
-                      <Link className="mx-2" />
+                      <LinkIcon className="mx-2" />
 
                       <input
                         className="w-full outline-0 focus:ring-0 focus:ring-offset-0 bg-transparent text-sm border-none"
                         type="text"
-                        value="https://citybega.com/emmanuelallan/goal?g=1"
+                        value="https://remotask.org"
                         readOnly
                       />
 
