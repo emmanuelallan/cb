@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, Fragment } from "react";
+import { sendGAEvent } from "@next/third-parties/google";
 import Image from "next/image";
 import {
   Dialog,
@@ -132,8 +133,9 @@ export default function Payment() {
     (e) => {
       e.preventDefault();
       if (validateForm()) setIsPaymentModalOpen(true);
+      sendGAEvent("donate", "pledge", "chai", formData.amount);
     },
-    [validateForm]
+    [validateForm, formData.amount]
   );
 
   const config = useMemo(

@@ -1,3 +1,4 @@
+import { GoogleAnalytics } from "@next/third-parties/google";
 import Notify from "@/components/notify";
 import "./globals.css";
 
@@ -13,6 +14,7 @@ export default function RootLayout({ children }) {
         <Notify />
         {children}
       </body>
+      <GoogleAnalytics gaId="G-PRHE6GZQ9K" />
     </html>
   );
 }

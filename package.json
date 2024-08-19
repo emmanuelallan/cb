@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.1.2",
+    "@next/third-parties": "^14.2.5",
     "@paypal/react-paypal-js": "^8.5.0",
     "@prisma/client": "^5.18.0",
     "@wavesurfer/react": "^1.0.7",
